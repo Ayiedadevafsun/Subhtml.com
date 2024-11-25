@@ -1,0 +1,107 @@
+ // Load points from local storage when page loads
+    let points = localStorage.getItem('fliesPoints') || 0;
+    document.getElementById('points').innerText = points;
+
+    // Function to create confetti effect
+    function createConfetti() {
+        const canvas = document.createElement('canvas');
+        canvas.style.position = 'fixed';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.width = '100vw';
+        canvas.style.height = '100vh';
+        canvas.style.pointerEvents = 'none';
+        document.body.appendChild(canvas);
+
+        const ctx = canvas.getContext('2d');
+        const confettiPieces = [];
+
+        function randomColor() {
+            const colors = ['#FF5733', '#33FF57', '#3357FF', '#FFC300', '#FF33F6', '#33FFF2'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function createExplosion() {
+            for (let i = 0; i < 100; i++) {
+                confettiPieces.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2 + 2,
+                    color: randomColor(),
+                    speedX: (Math.random() - 0.5) * 10,
+                    speedY: (Math.random() - 0.5) * 10,
+                    gravity: 0.1,
+                    lifetime: Math.random() * 1000 + 1000
+                });
+            }
+        }
+
+        function drawConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < confettiPieces.length; i++) {
+                const confetti = confettiPieces[i];
+                ctx.fillStyle = confetti.color;
+                ctx.fillRect(confetti.x, confetti.y, confetti.size, confetti.size);
+
+                confetti.x += confetti.speedX;
+                confetti.y += confetti.speedY;
+                confetti.speedY += confetti.gravity;
+                confetti.lifetime--;
+
+                if (confetti.lifetime <= 0) {
+                    confettiPieces.splice(i, 1);
+                    i--;
+                }
+            }
+
+            if (confettiPieces.length > 0) {
+                requestAnimationFrame(drawConfetti);
+            } else {
+                document.body.removeChild(canvas);
+            }
+        }
+
+        createExplosion();
+        drawConfetti();
+    }
+
+    // Function to handle task start
+    function startTask(taskId, url, reward) {
+        // Check if task has already been completed
+        if (localStorage.getItem('task' + taskId)) {
+            alert('Anda sudah menyelesaikan Tugas ini');
+            return;
+        }
+
+        // Open link in a new tab
+        window.open(url, '_blank');
+
+        // Update points in local storage
+        points = parseInt(points) + reward;
+        localStorage.setItem('fliesPoints', points);
+        document.getElementById('points').innerText = points;
+
+        // Mark the task as completed
+        localStorage.setItem('task' + taskId, 'completed');
+
+        // Change button text to 'Complete' and disable it
+        const taskButton = document.getElementById('task-' + taskId).querySelector('.btn');
+        taskButton.textContent = 'Complete';
+        taskButton.classList.add('disabled');
+
+        // Show alert and then trigger confetti effect
+        alert(`Selamat! Anda akan mendapatkan ${reward} poin.`);
+        createConfetti();
+    }
+
+    // Hide the "Start" button for completed tasks
+    document.addEventListener('DOMContentLoaded', () => {
+        for (let i = 1; i <= 4; i++) {
+            if (localStorage.getItem('task' + i)) {
+                const taskButton = document.getElementById('task-' + i).querySelector('.btn');
+                taskButton.textContent = 'Complete';
+                taskButton.classList.add('disabled');
+            }
+        }
+    });
